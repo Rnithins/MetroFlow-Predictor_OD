@@ -15,8 +15,8 @@ MetroFlow Predictor is a full-stack metro passenger forecasting application buil
 
 ## Stack
 
-- Frontend: Next.js 14, React 18, TypeScript, Tailwind CSS, Recharts
-- Backend: FastAPI, Pydantic, PyMongo, JWT, bcrypt
+- Frontend: React 18, TypeScript, Tailwind CSS, Recharts
+- Backend: FastAPI, JWT 
 - Database: MongoDB
 - ML module: Python inference helper in `ml-model/`
 
