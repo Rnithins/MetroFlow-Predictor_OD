@@ -28,6 +28,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const storedTheme = (localStorage.getItem(STORAGE_KEY) as ThemePreference | null) ?? "system";
     const nextResolvedTheme = resolveTheme(storedTheme);
     document.documentElement.dataset.theme = nextResolvedTheme;
+    document.documentElement.classList.toggle("dark", nextResolvedTheme === "dark");
     setThemeState(storedTheme);
     setResolvedTheme(nextResolvedTheme);
 
@@ -36,6 +37,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       const currentTheme = (localStorage.getItem(STORAGE_KEY) as ThemePreference | null) ?? "system";
       const currentResolvedTheme = resolveTheme(currentTheme);
       document.documentElement.dataset.theme = currentResolvedTheme;
+      document.documentElement.classList.toggle("dark", currentResolvedTheme === "dark");
       setResolvedTheme(currentResolvedTheme);
     };
 
@@ -47,6 +49,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(STORAGE_KEY, nextTheme);
     const nextResolvedTheme = resolveTheme(nextTheme);
     document.documentElement.dataset.theme = nextResolvedTheme;
+    document.documentElement.classList.toggle("dark", nextResolvedTheme === "dark");
     setThemeState(nextTheme);
     setResolvedTheme(nextResolvedTheme);
   }

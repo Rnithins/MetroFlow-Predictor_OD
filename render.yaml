@@ -1,0 +1,58 @@
+services:
+  # ----------------------------------------------------
+  # 1. MetroFlowNet FastAPI Backend (Python Web Service)
+  # ----------------------------------------------------
+  - type: web
+    name: metroflow-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: APP_NAME
+        value: MetroFlowNet API
+      - key: API_PREFIX
+        value: /api/v1
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "180"
+      - key: MONGODB_URI
+        value: mongomock://localhost
+      - key: MONGODB_DATABASE
+        value: metroflow_predictor
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: MODEL_VERSION
+        value: metroflow-adaptive-fusion-v2
+      - key: PYTHON_VERSION
+        value: 3.11.9
+
+  # ----------------------------------------------------
+  # 2. MetroFlowNet Transit Frontend (Node.js Next.js)
+  # ----------------------------------------------------
+  - type: web
+    name: metroflow-frontend
+    runtime: node
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 18.20.0
+      - key: NEXT_PUBLIC_API_BASE_URL
+        fromService:
+          type: web
+          name: metroflow-backend
+          property: host
+        transform: "https://${host}/api/v1"
+      - key: BACKEND_URL
+        fromService:
+          type: web
+          name: metroflow-backend
+          property: host
+        transform: "https://${host}"

@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=MetroFlowNet API
+      - API_PREFIX=/api/v1
+      - SECRET_KEY=metroflownet-production-secret-key-2026
+      - MONGODB_URI=mongodb://mongo:27017
+      - MONGODB_DATABASE=metroflow_predictor
+      - POSTGRES_URI=postgresql://metro_user:metro_pass@postgres:5432/metroflownet
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:8000,http://127.0.0.1:3000,http://127.0.0.1:8000
+    depends_on:
+      - mongo
+      - postgres
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1
+      - BACKEND_URL=http://backend:8000
+    depends_on:
+      - backend
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: metroflownet_postgres
+    environment:
+      POSTGRES_USER: metro_user
+      POSTGRES_PASSWORD: metro_pass
+      POSTGRES_DB: metroflownet
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/database_schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+  mongo:
+    image: mongo:6-jammy
+    container_name: metroflownet_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  postgres_data:
+  mongo_data:

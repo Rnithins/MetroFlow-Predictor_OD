@@ -27,6 +27,4 @@ build/
 *.sqlite
 *.sqlite3
 
-# OS
-.DS_Store
-Thumbs.db
+*.tsbuildinfo

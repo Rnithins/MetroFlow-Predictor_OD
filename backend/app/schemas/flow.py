@@ -43,13 +43,16 @@ class PassengerFlowUpdate(BaseModel):
 
 
 class PredictionRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
-    station_id: str
+    station_id: str | None = None
+    origin_station_id: str | None = None
+    destination_station_id: str | None = None
     target_timestamp: datetime | None = None
     horizon_hours: int = Field(default=1, ge=1, le=72)
-    weather_factor: float = Field(default=1.0, ge=0.6, le=1.7)
-    event_factor: float = Field(default=1.0, ge=0.7, le=2.2)
+    horizon_minutes: int | None = Field(default=None, ge=1, le=1440)
+    weather_factor: float = Field(default=1.0, ge=0.5, le=3.0)
+    event_factor: float = Field(default=1.0, ge=0.5, le=3.0)
     current_count: int | None = Field(default=None, ge=0)
 
 
@@ -58,14 +61,27 @@ class PredictionResponse(BaseModel):
     station_id: str
     station_name: str
     line: str
+    origin_station_name: str | None = None
+    destination_station_name: str | None = None
     target_timestamp: datetime
     predicted_count: float
     baseline_count: float
+    current_passengers: int | None = None
     confidence_score: float
+    confidence_percentage: str | None = None
+    congestion_level: str | None = None
     anomaly_score: float
     recommended_action: str
     model_version: str
     generated_at: datetime
+    horizons: dict[str, float] | None = None
+    st_weight: float | None = None
+    ext_weight: float | None = None
+    data_source: str = "PREDICTED"
+    weather_condition: str | None = None
+    weather_provider: str | None = None
+    forecast_disclaimer: str = "Forecast — not a guaranteed passenger count."
+
 
 
 class TrainRequest(BaseModel):

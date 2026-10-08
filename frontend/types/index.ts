@@ -30,6 +30,9 @@ export type Station = {
   longitude: number;
   baseline_capacity: number;
   is_interchange: boolean;
+  state: string;
+  district: string;
+  city: string;
 };
 
 export type PassengerFlow = {
@@ -51,15 +54,27 @@ export type Prediction = {
   station_id: string;
   station_name: string;
   line: string;
+  origin_station_name?: string | null;
+  destination_station_name?: string | null;
   target_timestamp: string;
   predicted_count: number;
   baseline_count: number;
+  current_passengers?: number | null;
   confidence_score: number;
+  confidence_percentage?: string | null;
+  congestion_level?: string | null;
   anomaly_score: number;
   recommended_action: string;
   model_version: string;
   generated_at: string;
+  st_weight?: number | null;
+  ext_weight?: number | null;
 };
+
+export type PredictionResponse = Prediction & {
+  horizons?: Record<string, number> | null;
+};
+
 
 export type DashboardKpi = {
   label: string;

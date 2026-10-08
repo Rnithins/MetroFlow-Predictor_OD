@@ -1,61 +1,105 @@
 import Link from "next/link";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function HomePage() {
   return (
-    <main className="app-shell flex items-center">
-      <div className="grid w-full gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-        <section className="glass-card section-card fade-up overflow-hidden">
-          <span className="status-pill bg-[var(--accent-soft)] text-[var(--accent)]">MetroFlow Predictor</span>
-          <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-[-0.04em] sm:text-6xl">
-            Forecast station crowding before the platform feels it.
-          </h1>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-[var(--muted)] sm:text-lg">
-            A full-stack metro analytics workspace with JWT auth, MongoDB-backed historical data, and a Python
-            forecasting module for hourly passenger flow prediction.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/auth" className="button-primary">
-              Open Dashboard
-            </Link>
-            <Link href="/history" className="button-secondary">
-              Explore Historical Trends
-            </Link>
+    <main className="app-shell flex flex-col justify-between py-6">
+      {/* Top Apple Floating Island Nav */}
+      <header className="glass-card mb-8 flex items-center justify-between p-4 px-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 p-[1px] shadow-md shadow-blue-500/20">
+            <div className="flex h-full w-full items-center justify-center rounded-[11px] bg-white/20 backdrop-blur-md text-white font-bold text-xs">
+              MF
+            </div>
           </div>
-          <div className="mt-10 grid gap-4 sm:grid-cols-3">
+          <div>
+            <span className="text-xs font-bold tracking-tight text-[var(--text)]">MetroFlowNet</span>
+            <span className="ml-2 rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-[var(--accent)] border border-blue-500/20">
+              Transit SaaS
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <Link href="/auth" className="button-primary text-xs py-2 px-4">
+            Launch Platform
+          </Link>
+        </div>
+      </header>
+
+      {/* Hero Bento Grid */}
+      <div className="grid w-full gap-6 lg:grid-cols-[1.15fr_0.85fr] items-stretch my-auto">
+        {/* Left Hero Card */}
+        <section className="glass-card section-card fade-up flex flex-col justify-between overflow-hidden">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/25 bg-blue-500/10 px-3.5 py-1 text-xs font-semibold text-[var(--accent)] backdrop-blur-md">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] animate-pulse" />
+              National Metro Intelligence Platform · India
+            </div>
+
+            <h1 className="mt-6 max-w-3xl text-3xl font-bold tracking-[-0.04em] sm:text-5xl lg:text-6xl text-[var(--text)] leading-[1.08]">
+              Next-Generation <br />
+              <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 bg-clip-text text-transparent">
+                Transit Intelligence
+              </span>{" "}
+              for Smart Metros.
+            </h1>
+
+            <p className="mt-5 max-w-xl text-sm leading-relaxed text-[var(--muted)] sm:text-base">
+              Adaptive spatial-temporal graph neural networks modeling Origin-Destination passenger flows, multi-horizon crowd surges, and smart train dispatching across 9 Indian metropolitan networks.
+            </p>
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/dashboard" className="button-primary px-6 py-3 text-sm">
+                Enter Operations Center →
+              </Link>
+              <Link href="/auth" className="button-secondary px-6 py-3 text-sm">
+                Operator Sign In
+              </Link>
+            </div>
+          </div>
+
+          <div className="mt-10 grid gap-3 sm:grid-cols-3 pt-6 border-t border-[var(--panel-border)]/60">
             {[
-              ["Forecasting", "Hourly and daily passenger flow projections"],
-              ["Operations", "Heatmaps, alerts, recent predictions, admin uploads"],
-              ["Security", "JWT sessions, protected routes, bcrypt password hashing"]
+              ["Surge Forecasts", "Multi-horizon projections: 15m, 30m, 1h, and 24h"],
+              ["OD Flow Matrices", "Real-time travel pathways between stations"],
+              ["Route Optimizer", "Multi-objective transit corridor routing"]
             ].map(([title, description]) => (
-              <div key={title} className="rounded-[24px] bg-[color:var(--panel)] p-4 backdrop-blur-sm">
-                <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">{title}</h2>
-                <p className="mt-3 text-sm leading-6">{description}</p>
+              <div key={title} className="rounded-2xl bg-black/[0.02] dark:bg-white/[0.04] p-4 border border-[var(--panel-border)]/50">
+                <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{title}</h2>
+                <p className="mt-1.5 text-xs text-[var(--muted)] leading-5">{description}</p>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="space-y-6">
+        {/* Right Bento Grid */}
+        <section className="space-y-6 flex flex-col justify-between">
           <div className="glass-card section-card fade-up">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Live Snapshot</p>
-                <h2 className="mt-2 text-2xl font-semibold">Minimal, responsive operations view</h2>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Active Deployment</p>
+                <h2 className="mt-1 text-xl font-bold tracking-tight text-[var(--text)]">National Transit Infrastructure</h2>
               </div>
-              <div className="status-pill bg-emerald-500/12 text-emerald-600">AI Ready</div>
+              <span className="status-pill bg-emerald-500/10 text-[var(--good)] border border-emerald-500/20">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                PyTorch AFFN
+              </span>
             </div>
+
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               {[
-                ["Predicted next-hour load", "684 riders", "warning"],
-                ["Model confidence", "88%", "good"],
-                ["Alert corridors", "3 active", "critical"],
-                ["Data freshness", "< 5 min", "good"]
+                ["Monitored Stations", "16 Active Terminal Nodes", "good"],
+                ["Synchronized Networks", "9 Metro Cities", "good"],
+                ["Alert Watchlist", "3 Stations at Risk", "warning"],
+                ["Average Network Speed", "41.2 km/h", "good"]
               ].map(([label, value, tone]) => (
-                <div key={label} className="rounded-[22px] bg-[color:var(--panel)] p-4">
-                  <p className="text-sm text-[var(--muted)]">{label}</p>
-                  <p className="mt-2 text-2xl font-semibold">{value}</p>
+                <div key={label} className="rounded-2xl bg-black/[0.02] dark:bg-white/[0.04] p-4 border border-[var(--panel-border)]/60">
+                  <p className="text-[11px] text-[var(--muted)]">{label}</p>
+                  <p className="mt-1.5 text-lg font-bold text-[var(--text)]">{value}</p>
                   <p
-                    className={`mt-2 text-sm ${
+                    className={`mt-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${
                       tone === "critical"
                         ? "text-[var(--danger)]"
                         : tone === "warning"
@@ -63,7 +107,7 @@ export default function HomePage() {
                           : "text-[var(--good)]"
                     }`}
                   >
-                    {tone === "critical" ? "Take action" : tone === "warning" ? "Monitor closely" : "Within target"}
+                    {tone === "critical" ? "Action Required" : tone === "warning" ? "Surge Watch" : "Operational"}
                   </p>
                 </div>
               ))}
@@ -71,16 +115,29 @@ export default function HomePage() {
           </div>
 
           <div className="glass-card section-card fade-up">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Included Modules</p>
-            <ul className="mt-4 space-y-3 text-sm leading-6 text-[var(--muted)]">
-              <li>Login/register flow with validation and protected navigation</li>
-              <li>Dashboard charts, heatmaps, tables, and forecast generation</li>
-              <li>Historical daily and hourly trend analytics</li>
-              <li>Profile management and admin CRUD for station flow records</li>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Core AI Architecture</p>
+            <ul className="mt-4 space-y-3 text-xs leading-5 text-[var(--muted)]">
+              <li className="flex items-start gap-2.5">
+                <span className="text-[var(--accent)] font-bold">✔</span>
+                <span>Spatial-Temporal GNN-LSTM encoders for network loading topologies</span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="text-[var(--accent)] font-bold">✔</span>
+                <span>Adaptive Feature Fusion gates dynamic weather & festival rush multipliers</span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="text-[var(--accent)] font-bold">✔</span>
+                <span>Interactive particle vector flow canvas with real-time station diagnostics</span>
+              </li>
             </ul>
           </div>
         </section>
       </div>
+
+      {/* Apple Footer */}
+      <footer className="mt-8 text-center text-xs text-[var(--muted)] py-2">
+        <p>MetroFlowNet Transit OS · Built with Next.js 14, FastAPI & PyTorch · Apple Glassmorphic Architecture</p>
+      </footer>
     </main>
   );
 }

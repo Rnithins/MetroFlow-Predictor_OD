@@ -26,12 +26,23 @@ async function readResponseBody(response: Response): Promise<unknown> {
 export async function apiFetch<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
   let response: Response;
 
+  const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
+  const baseHeaders: Record<string, string> = {};
+  if (!isFormData) {
+    baseHeaders["Content-Type"] = "application/json";
+  }
+  if (token && typeof token === "string") {
+    const cleanToken = token.trim();
+    if (cleanToken && cleanToken.toLowerCase() !== "null" && cleanToken.toLowerCase() !== "undefined") {
+      baseHeaders["Authorization"] = `Bearer ${cleanToken}`;
+    }
+  }
+
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
       ...options,
       headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...baseHeaders,
         ...(options.headers ?? {})
       },
       cache: "no-store"
@@ -43,6 +54,16 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}, token
   }
 
   if (!response.ok) {
+    if (response.status === 401 && typeof window !== "undefined") {
+      try {
+        localStorage.removeItem("metroflow_predictor_token");
+        localStorage.removeItem("metroflow_predictor_user");
+        document.cookie = "metroflow_predictor_token=; path=/; max-age=0; samesite=lax";
+      } catch {
+        // ignore storage errors
+      }
+    }
+
     const payload = await readResponseBody(response);
     const message =
       typeof payload === "string"

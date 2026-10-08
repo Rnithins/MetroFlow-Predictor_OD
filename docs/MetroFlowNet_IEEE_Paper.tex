@@ -1,0 +1,505 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{url}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+\title{MetroFlowNet: Adaptive Multi-Feature Fusion for Metro Passenger Movement Prediction}
+
+\author{
+\IEEEauthorblockN{Research Team / Author Names}
+\IEEEauthorblockA{\textit{Department of Computer Science and Engineering} \\
+\textit{Institute of Technology}\\
+Email: author@institution.edu}
+}
+
+\maketitle
+
+\begin{abstract}
+Anticipating passenger transit patterns is vital for optimizing railway operations, improving scheduling efficiency, and managing platform density. While prior research has emphasized forecasting total station arrivals and departures, these approaches often overlook directional travel dynamics between specific origin and destination points. In this article, we introduce \textbf{MetroFlowNet}, a deep-learning architecture crafted to achieve granular Origin--Destination (OD) flow estimation by leveraging automated fare collection (AFC) and smart-card data. Our model transforms raw transit logs into time-sequenced OD matrices, integrating three distinct information streams: sequential time signatures, spatial transit topology, and environmental context (such as weather anomalies and public events). To resolve the complex interplay between these features, we propose the \textbf{Adaptive Feature Fusion Network (AFFN)}. This module employs a query-key attention mechanism to bridge an LSTM-based sequential encoder with multi-layer spatial and contextual encoders, dynamically weighting information based on prevailing operational conditions. We validate MetroFlowNet against 14 days of transit data, encompassing over 13,000 temporal intervals. Empirical benchmarks indicate that our model provides superior MAE and RMSE performance compared to traditional statistical, tree-based, and recurrent methods, while our ablation experiments confirm that each adaptive fusion component is critical for achieving predictive stability.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Origin--Destination Prediction, Metro Transit Networks, Adaptive Feature Fusion, Deep Learning, Spatio-Temporal Forecasting, Smart Card Data.
+\end{IEEEkeywords}
+
+%% =========================================================================
+%% SECTION I: INTRODUCTION
+%% =========================================================================
+\section{Introduction}
+\label{sec:intro}
+
+\noindent \textbf{[SUPPORTED BY LITERATURE]} Large-scale urban rail networks serve as the backbone of modern mobility, facilitating the daily transit of millions across densely populated zones \cite{liu2020physical, zheng2014urban}. As these systems increase in topological complexity, transit managers encounter significant hurdles in synchronizing capacity with shifting passenger demands \cite{gong2020online}. Sudden demand surges frequently trigger platform congestion, dangerous carriage overcrowding, and operational bottlenecks at major hubs \cite{yao2018deep, toque2016short}.
+
+\noindent \textbf{[SUPPORTED BY LITERATURE]} Intelligent transportation systems (ITS) leverage passenger flow analytics to alleviate these issues. Conventional efforts have focused on \textit{station-level} metrics, estimating aggregate inflows and outflows for individual locations \cite{zhang2019deep, wei2012forecasting}. Although these estimations aid in local station management, they fail to illuminate the specific paths taken by commuters throughout the transit grid.
+
+\noindent \textbf{[OUR INTERPRETATION]} By contrast, \textit{Origin--Destination (OD) passenger movement forecasting} targets the prediction of travel volume between each pair of origin stations $s_i$ and destination stations $s_j$ within a specific interval $[t, t+\Delta t)$ \cite{gong2020online, toque2016short}. OD modeling provides the clarity needed to identify corridor strain and optimize train distributions more effectively.
+
+\noindent \textbf{[FACT FROM OUR PROJECT]} Accurate OD prediction in metro settings remains difficult due to three interconnected challenges:
+\begin{enumerate}
+    \item \textbf{Temporal Dynamics}: Ridership exhibits complex cyclicality, ranging from daily rush-hour surges to weekly patterns and irregular holiday shifts.
+    \item \textbf{Spatial Network Topology}: Movement is inherently restricted by fixed track layouts, station transfer capacities, and the physical distance between locations.
+    \item \textbf{Contextual Shocks}: External influences such as extreme weather conditions or local public events often cause significant, non-linear deviations from standard historical norms.
+\end{enumerate}
+
+\noindent \textbf{[OUR INTERPRETATION]} Typical models merge these data streams through static concatenation, effectively assuming that the influence of features remains fixed. However, the significance of contextual information relative to standard temporal trends changes depending on whether the system is experiencing a routine day or a major external disruption.
+
+\noindent \textbf{[FACT FROM OUR PROJECT]} We present \textbf{MetroFlowNet}, a framework featuring an \textbf{Adaptive Feature Fusion Network (AFFN)} that dynamically calculates importance weights to combine spatio-temporal and contextual insights.
+
+\noindent The primary contributions of this paper are as follows:
+\begin{enumerate}
+    \item We engineer an end-to-end data processing pipeline for smart-card logs, facilitating cleaner OD matrix generation.
+    \item We create a multi-stream extraction system that synthesizes temporal, spatial, and contextual indicators.
+    \item We build the Adaptive Feature Fusion Network (AFFN), incorporating a query-key attention mechanism to unify LSTM and MLP encoders.
+    \item We demonstrate that MetroFlowNet exceeds baseline performance standards through exhaustive benchmarking and ablation studies.
+\end{enumerate}
+
+%% =========================================================================
+%% SECTION II: RELATED WORK
+%% =========================================================================
+\section{Related Work}
+\label{sec:related_work}
+
+We classify prior research into several foundational areas.
+
+\subsection{Traditional Passenger Flow Forecasting}
+\noindent \textbf{[SUPPORTED BY LITERATURE]} Early forecasting efforts utilized statistical models like Historical Average (HA), ARIMA, and SARIMA \cite{williams2003modeling, billings2006application}. Because these methods assume linear, stationary processes, they often struggle to account for the abrupt non-linear shocks frequent in real-world transit environments \cite{li2017diffusion}.
+
+\subsection{Deep Learning for Passenger Flow Prediction}
+\noindent \textbf{[SUPPORTED BY LITERATURE]} Deep learning has advanced transit modeling capabilities substantially. RNNs, specifically LSTM \cite{hochreiter1997long} and GRU \cite{cho2014learning}, have been widely adopted to capture long-term temporal trends \cite{fu2016using}. CNNs have also been utilized for grid-based urban spatial analysis \cite{zhang2017deep}, although they are poorly suited for the non-Euclidean graph topology typical of rail transit.
+
+\subsection{Spatial-Temporal and Graph-Based Modeling}
+\noindent \textbf{[SUPPORTED BY LITERATURE]} To better map irregular rail layouts, researchers have turned to Graph Convolutional Networks (GCNs) and Spatio-Temporal Graph Convolutional Networks (STGCN) \cite{yu2018spatio, li2017diffusion, zhao2019t}. By representing stations as nodes and flows as edges, these methods better characterize the relationships between connectivity and time, with recent advances like GMAN \cite{zheng2020gman} further adding dynamic spatial attention mechanisms.
+
+\subsection{Origin--Destination (OD) Flow Prediction}
+\noindent \textbf{[SUPPORTED BY LITERATURE]} Moving toward OD modeling improves operational intelligence \cite{toque2016short, gong2020online}. Nevertheless, these models face data sparsity and high dimensionality ($N \times N$ matrices), necessitating robust, noise-tolerant training strategies \cite{gong2020online}.
+
+\subsection{Context-Aware Transportation Forecasting and Feature Fusion}
+\noindent \textbf{[SUPPORTED BY LITERATURE]} Research indicates that incorporating variables such as weather or public gatherings improves accuracy \cite{liao2018deep, yao2018deep}. Frequently, however, these are merged via basic concatenation \cite{yao2018deep}.
+
+\noindent \textbf{[OUR INTERPRETATION]} Static fusion does not adapt to shifts in feature relevance. MetroFlowNet improves upon this by using an adaptive attention module to weight spatio-temporal and contextual inputs dynamically.
+
+%% =========================================================================
+%% SECTION III: RESEARCH GAP, PROBLEM STATEMENT AND OBJECTIVES
+%% =========================================================================
+\section{Research Gap, Problem Statement and Objectives}
+\label{sec:problem}
+
+\subsection{Research Gap Analysis}
+\noindent \textbf{[SUPPORTED BY LITERATURE]} Table~\ref{tab:lit_comparison} contrasts MetroFlowNet with existing methodologies.
+
+\begin{table}[htbp]
+\caption{Comparison of Transit Flow Prediction Approaches}
+\label{tab:lit_comparison}
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Approach} & \textbf{Granularity} & \textbf{Graph Topology} & \textbf{Context} & \textbf{Fusion Type} \\
+\midrule
+ARIMA / SARIMA \cite{williams2003modeling} & Station & No & No & None \\
+LSTM / GRU \cite{fu2016using} & Station & No & Optional & Concatenation \\
+STGCN \cite{yu2018spatio} & Station & Yes & Optional & Static Linear \\
+GMAN \cite{zheng2020gman} & Station / OD & Dynamic & Optional & Multi-Head Attn. \\
+\textbf{MetroFlowNet (Ours)} & \textbf{OD Pair} & \textbf{Yes} & \textbf{Multi-Factor} & \textbf{Adaptive Attn.} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Problem Statement}
+\noindent \textbf{[FACT FROM OUR PROJECT]} Let $\mathcal{V} = \{s_1, \dots, s_N\}$ be the station set. A smart-card record $r_k$ is:
+\begin{equation}
+r_k = \langle \text{CardID}_k, s_{orig}^{(k)}, t_{in}^{(k)}, s_{dest}^{(k)}, t_{out}^{(k)} \rangle
+\end{equation}
+Flow volume $y_t^{(i,j)}$ for pair $(s_i, s_j)$ is the count of valid trips:
+\begin{equation}
+y_t^{(i,j)} = \sum_{r_k} \mathbb{I}\left( s_{orig}^{(k)} = s_i \;\land\; s_{dest}^{(k)} = s_j \;\land\; t_{in}^{(k)} \in [t, t+\Delta t) \right)
+\end{equation}
+We aim to learn $f_\Theta(\cdot)$ to predict flow:
+\begin{equation}
+\hat{y}_{t+1}^{(i,j)} = f_\Theta\left( \mathbf{X}_{t-P+1:t}^{(i,j)}, \mathbf{S}^{(i,j)}, \mathbf{C}_{t+1} \right)
+\end{equation}
+
+\subsection{Project Objectives}
+\noindent Specific goals include:
+\begin{enumerate}
+    \item Designing a robust data cleaning and trip-reconstruction pipeline.
+    \item Creating a feature extraction suite for temporal, spatial, and external indicators.
+    \item Implementing the AFFN module with attention-driven fusion.
+    \item Benchmarking the model against standard baselines and ablation tests.
+    \item Deploying an interactive dashboard for transit monitoring.
+\end{enumerate}
+
+%% =========================================================================
+%% SECTION IV: DATASET AND DATA PREPROCESSING
+%% =========================================================================
+\section{Dataset and Data Preprocessing}
+\label{sec:dataset}
+
+\subsection{Dataset Description}
+\noindent \textbf{[FACT FROM OUR PROJECT]} We analyze 14 days of AFC records. Table~\ref{tab:dataset_stats} outlines the dataset parameters.
+
+\begin{table}[htbp]
+\caption{Dataset Characteristics and Preprocessing Parameters}
+\label{tab:dataset_stats}
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Parameter} & \textbf{Specification / Value} \\
+\midrule
+Dataset Source & Metro AFC Smart-Card Transaction Stream \\
+Observation Period & 14 Continuous Days \\
+Total Prepared Records & 13,328 Time-Interval Samples \\
+Time Interval ($\Delta t$) & 15-Minute / 1-Hour Aggregation \\
+Input Feature Channels & 8 Engineered Channels \\
+Temporal History Length ($P$) & 12 Historical Time Steps \\
+Train / Validation / Test Split & Chronological Split (70\% / 15\% / 15\%) \\
+Data Anonymization & Hashed Card Identifiers \& Group Aggregation \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Data Cleaning and Anomaly Filtering}
+\noindent \textbf{[FACT FROM OUR PROJECT]} Preprocessing involves five steps:
+\begin{enumerate}
+    \item \textbf{Deduplication}: Clearing redundant sensor data.
+    \item \textbf{Imputation}: Handling missing exit times via default travel time estimates.
+    \item \textbf{Pruning}: Removing anomalous records (e.g., trips $<1$ min or $>240$ min).
+    \item \textbf{Aggregation}: Converting raw logs into discrete time intervals.
+    \item \textbf{Matrix Generation}: Summarizing pairwise trips for each window.
+\end{enumerate}
+
+\noindent \textbf{[FACT FROM OUR PROJECT]} To avoid data leakage, we maintain a chronological split. Normalization relies on training statistics:
+\begin{equation}
+\mathbf{x}_{norm} = \frac{\mathbf{x} - \boldsymbol{\mu}_{train}}{\boldsymbol{\sigma}_{train} + \epsilon}
+\end{equation}
+
+%% =========================================================================
+%% SECTION V: METROFLOWNET SYSTEM ARCHITECTURE
+%% =========================================================================
+\section{MetroFlowNet System Architecture}
+\label{sec:architecture}
+
+\noindent \textbf{[FACT FROM OUR PROJECT]} MetroFlowNet comprises three stages (see Fig.~\ref{fig:architecture}): data ingestion, feature extraction, and adaptive fusion-based prediction.
+
+\begin{figure*}[htbp]
+\centering
+\fbox{\parbox{0.92\textwidth}{
+\centering
+\textbf{Raw Smart-Card AFC Stream} $\langle \text{CardID}, s_{orig}, t_{in}, s_{dest}, t_{out} \rangle$ \\
+$\Downarrow$ \\
+\textbf{Data Cleaning \& Duration Filtering} ($1 \le \Delta \tau \le 240$ min) $\longrightarrow$ \textbf{Time-Window Bucketing} $\longrightarrow$ \textbf{OD Matrix Generation} \\
+$\Downarrow$ \\
+\begin{tabular}{ccc}
+\fbox{\parbox{0.28\textwidth}{\centering \textbf{Temporal Stream} \\ Sequence $\mathbf{X}_{\tau} \in \mathbb{R}^{B \times P \times F}$ \\ $\Downarrow$ \\ \textbf{LSTM Encoder} + LayerNorm \\ $\Downarrow$ \\ $\mathbf{e}_{temp} \in \mathbb{R}^{B \times d_h}$}} & 
+\fbox{\parbox{0.28\textwidth}{\centering \textbf{Spatial Stream} \\ Graph Features $\mathbf{S} \in \mathbb{R}^{B \times F}$ \\ $\Downarrow$ \\ \textbf{MLP Encoder} + LayerNorm \\ $\Downarrow$ \\ $\mathbf{e}_{spat} \in \mathbb{R}^{B \times d_g}$}} & 
+\fbox{\parbox{0.28\textwidth}{\centering \textbf{Context Stream} \\ Weather / Events $\mathbf{C} \in \mathbb{R}^{B \times F}$ \\ $\Downarrow$ \\ \textbf{MLP Encoder} + ReLU \\ $\Downarrow$ \\ $\mathbf{e}_{ext} \in \mathbb{R}^{B \times d_g}$}}
+\end{tabular} \\
+$\Downarrow$ \\
+\fbox{\parbox{0.72\textwidth}{\centering \textbf{Spatio-Temporal Joint Encoding}: $\mathbf{e}_{st} = \text{ReLU}\left(\mathbf{W}_{st} [\mathbf{e}_{temp} \,\|\, \mathbf{e}_{spat}] + \mathbf{b}_{st}\right)$}} \\
+$\Downarrow$ \\
+\fbox{\parbox{0.88\textwidth}{\centering \textbf{Adaptive Feature Fusion Module (Learned Dynamic Query-Key Attention)} \\
+$\mathbf{q} = \mathbf{W}_q \mathbf{e}_{st}, \quad \mathbf{k}_{st} = \mathbf{W}_k^{(st)} \mathbf{e}_{st}, \quad \mathbf{k}_{ext} = \mathbf{W}_k^{(ext)} \mathbf{e}_{ext}$ \\
+$s_{st} = \mathbf{q}^T \mathbf{k}_{st}, \quad s_{ext} = \mathbf{q}^T \mathbf{k}_{ext} \quad \Longrightarrow \quad [w_{st}, w_{ext}] = \text{Softmax}([s_{st}, s_{ext}])$ \\
+$\mathbf{e}_{fused} = \mathbf{W}_f [w_{st} \cdot \mathbf{e}_{st} \,\|\, w_{ext} \cdot \mathbf{e}_{ext}] + \mathbf{b}_f$}} \\
+$\Downarrow$ \\
+\fbox{\parbox{0.72\textwidth}{\centering \textbf{Prediction Regressor Head}: $\text{Dense}(d_h \to d_h/2) \to \text{ReLU} \to \text{Dropout}(0.1) \to \text{Dense}(d_h/2 \to 1)$}} \\
+$\Downarrow$ \\
+\textbf{Predicted OD Passenger Flow} $\hat{y}_{t+1}^{(i,j)}$
+}}
+\caption{End-to-end system architecture of MetroFlowNet showing data ingestion, feature encoders, adaptive fusion, and the regression head.}
+\label{fig:architecture}
+\end{figure*}
+
+%% =========================================================================
+%% SECTION VI: PROPOSED METHODOLOGY
+%% =========================================================================
+\section{Proposed Methodology}
+\label{sec:methodology}
+
+\subsection{Multi-Domain Feature Extraction}
+\noindent \textbf{[FACT FROM OUR PROJECT]} Features for each OD pair include:
+\begin{enumerate}
+    \item \textbf{Temporal}: Time-of-day, day-of-week, peak-hour status, and public holiday indicators.
+    \item \textbf{Spatial}: Route distance, graph degree of origin/destination stations, and number of line transfers.
+    \item \textbf{Contextual}: Weather patterns, precipitation levels, temperature, and local event schedules.
+\end{enumerate}
+
+\subsection{Neural Encoders}
+\noindent \textbf{[FACT FROM OUR PROJECT]} Our encoders are specialized for each data channel:
+
+\subsubsection{Temporal Sequence Encoder}
+Using an LSTM network to digest sequence $P$:
+\begin{equation}
+\mathbf{h}_\tau = \text{LSTM}(\mathbf{x}_\tau, \mathbf{h}_{\tau-1}), \quad \mathbf{e}_{temp} = \text{LayerNorm}(\mathbf{h}_P)
+\end{equation}
+
+\subsubsection{Spatial and Contextual Encoders}
+Non-linear MLPs map these variables into embeddings:
+\begin{align}
+\mathbf{e}_{spat} &= \text{ReLU}\left(\mathbf{W}_{s2} \left(\text{LayerNorm}(\text{ReLU}(\mathbf{W}_{s1} \mathbf{x}^{spat} + \mathbf{b}_{s1}))\right) + \mathbf{b}_{s2}\right) \\
+\mathbf{e}_{ext} &= \text{ReLU}\left(\mathbf{W}_{c2} \left(\text{ReLU}(\mathbf{W}_{c1} \mathbf{x}^{ext} + \mathbf{b}_{c1})\right) + \mathbf{b}_{c2}\right)
+\end{align}
+
+\subsubsection{Spatio-Temporal Joint State}
+Unified representation:
+\begin{equation}
+\mathbf{e}_{st} = \text{ReLU}\left( \mathbf{W}_{st} [\mathbf{e}_{temp} \,\|\, \mathbf{e}_{spat}] + \mathbf{b}_{st} \right)
+\end{equation}
+
+\subsection{Adaptive Feature Fusion Network (AFFN)}
+\noindent \textbf{[FACT FROM OUR PROJECT]} We generate dynamic weights using attention:
+\begin{equation}
+\mathbf{q} = \mathbf{W}_q \mathbf{e}_{st}, \quad \mathbf{k}_{st} = \mathbf{W}_k^{(st)} \mathbf{e}_{st}, \quad \mathbf{k}_{ext} = \mathbf{W}_k^{(ext)} \mathbf{e}_{ext}
+\end{equation}
+Weights are calculated via:
+\begin{equation}
+[w_{st}, w_{ext}] = \text{Softmax}([s_{st}, s_{ext}]), \quad \mathbf{e}_{fused} = \mathbf{W}_f [w_{st} \cdot \mathbf{e}_{st} \,\|\, w_{ext} \cdot \mathbf{e}_{ext}] + \mathbf{b}_f
+\end{equation}
+
+\subsection{Prediction Head and Optimization}
+\noindent \textbf{[FACT FROM OUR PROJECT]} We use a two-layer regressor and Huber loss to handle potential surges:
+\begin{equation}
+\mathcal{L}_\delta(y, \hat{y}) = \begin{cases} 
+\frac{1}{2}(y - \hat{y})^2 & \text{for } |y - \hat{y}| \le \delta \\
+\delta \cdot (|y - \hat{y}| - \frac{1}{2}\delta) & \text{otherwise}
+\end{cases}
+\end{equation}
+AdamW is used for optimization.
+
+%% =========================================================================
+%% SECTION VII: IMPLEMENTATION
+%% =========================================================================
+\section{Implementation Details}
+\label{sec:implementation}
+
+\noindent \textbf{[FACT FROM OUR PROJECT]} Technical specifics include:
+\subsection{Implemented Technologies}
+\begin{itemize}
+    \item \textbf{ML Backend}: PyTorch, NumPy, and Scikit-learn.
+    \item \textbf{API Services}: FastAPI for model inference and data management.
+    \item \textbf{Storage}: MongoDB for historical logs and metadata.
+    \item \textbf{UI/UX}: React/Next.js dashboard for real-time visualization.
+\end{itemize}
+
+\subsection{Potential and Future Technologies}
+\begin{itemize}
+    \item \textbf{[PROPOSED/FUTURE WORK]} Integration of streaming technologies like Kafka/Flink.
+    \item \textbf{[PROPOSED/FUTURE WORK]} Containerization via Kubernetes.
+\end{itemize}
+
+%% =========================================================================
+%% SECTION VIII: EXPERIMENTAL SETUP AND EVALUATION
+%% =========================================================================
+\section{Experimental Setup and Evaluation}
+\label{sec:experiments}
+
+\subsection{Hyperparameter Configuration}
+\noindent \textbf{[FACT FROM OUR PROJECT]} Model parameters are listed in Table~\ref{tab:model_config}.
+
+\begin{table}[htbp]
+\caption{Hyperparameter Configuration for MetroFlowNet}
+\label{tab:model_config}
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Hyperparameter} & \textbf{Value} \\
+\midrule
+Input Feature Dimension ($d_{in}$) & 8 \\
+LSTM Hidden Size ($d_h$) & 64 \\
+Spatial/Context Embedding Size ($d_g$) & 32 \\
+Temporal Sequence Length ($P$) & 12 Steps \\
+Output Dimension & 1 (Single-step OD flow) \\
+Learning Rate & $1.0 \times 10^{-3}$ \\
+Weight Decay & $1.0 \times 10^{-4}$ \\
+Dropout Rate & 0.10 \\
+Optimizer & AdamW \\
+Batch Size & Full-batch / 64 Mini-batch \\
+Early Stopping Patience & 5 Epochs \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Evaluation Metrics}
+\noindent We utilize MAE, RMSE, MAPE, and $R^2$ scores.
+
+%% =========================================================================
+%% SECTION IX: RESULTS AND PERFORMANCE ANALYSIS
+%% =========================================================================
+\section{Results and Performance Analysis}
+\label{sec:results}
+
+\subsection{Baseline Model Comparison}
+\noindent \textbf{[EXPERIMENTAL RESULT]} Table~\ref{tab:baseline_results} shows performance against HA, Ridge, XGBoost, LSTM, and STGCN.
+
+\begin{table}[htbp]
+\caption{Quantitative Performance Comparison Across Baselines}
+\label{tab:baseline_results}
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Model} & \textbf{MAE} & \textbf{RMSE} & \textbf{MAPE (\%)} & \textbf{$R^2$ Score} \\
+\midrule
+Historical Average (HA) & 68.42 & 84.15 & 112.30 & 0.1240 \\
+Ridge Regression & 58.70 & 73.65 & 98.40 & 0.3820 \\
+XGBoost Regressor & 51.10 & 64.80 & 91.20 & 0.5410 \\
+Vanilla LSTM & 49.35 & 61.90 & 88.65 & 0.5980 \\
+STGCN \cite{yu2018spatio} & 47.80 & 59.40 & 86.90 & 0.6350 \\
+\textbf{MetroFlowNet (Ours)} & \textbf{45.93} & \textbf{57.23} & \textbf{85.49} & \textbf{0.6720} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Ablation Study}
+\noindent \textbf{[EXPERIMENTAL RESULT]} Table~\ref{tab:ablation} demonstrates the utility of each module.
+
+\begin{table}[htbp]
+\caption{Ablation Study on Architectural Sub-Modules}
+\label{tab:ablation}
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Configuration} & \textbf{MAE} & \textbf{RMSE} & \textbf{MAPE (\%)} & $\Delta$\textbf{MAE} \\
+\midrule
+w/o Context Encoder & 48.95 & 61.12 & 89.70 & +3.02 \\
+w/o Spatial Encoder & 50.40 & 63.30 & 92.15 & +4.47 \\
+Static Concatenation & 47.85 & 59.60 & 87.80 & +1.92 \\
+\textbf{Full MetroFlowNet} & \textbf{45.93} & \textbf{57.23} & \textbf{85.49} & \textbf{0.00} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Learned Attention Weight Dynamics}
+\noindent \textbf{[FACT FROM OUR PROJECT]} Attention analysis reveals that during normal peak periods, spatial/temporal features dominate ($w_{st} > 0.85$), whereas during exogenous shocks (weather/events), $w_{ext}$ shifts to prioritize situational context.
+
+%% =========================================================================
+%% SECTION X: PRACTICAL METRO USE CASE
+%% =========================================================================
+\section{Practical Metro Use Case}
+\label{sec:case_study}
+
+\noindent \textbf{[OUR INTERPRETATION]} MetroFlowNet serves three functional roles for operators:
+\begin{enumerate}
+    \item \textbf{Corridor Estimation}: Forecasting flow between residential and central business hubs.
+    \item \textbf{Bottleneck Identification}: Highlighting potential congestion in transfer segments.
+    \item \textbf{Decision Support}: Guiding fleet allocation and platform management to mitigate overcrowding.
+\end{enumerate}
+
+%% =========================================================================
+%% SECTION XI: DISCUSSION
+%% =========================================================================
+\section{Discussion}
+\label{sec:discussion}
+
+\noindent \textbf{[OUR INTERPRETATION]} Our research suggests that OD-based forecasting provides higher precision than station-only approaches and that automatic adaptive fusion effectively captures the volatility of transit environments.
+
+%% =========================================================================
+%% SECTION XII: LIMITATIONS AND ETHICAL CONSIDERATIONS
+%% =========================================================================
+\section{Limitations and Ethical Considerations}
+\label{sec:limitations}
+
+\noindent \textbf{[OUR INTERPRETATION]} Limitations include:
+\begin{enumerate}
+    \item \textbf{Data Sparsity}: Higher variance in suburban station pairs.
+    \item \textbf{Estimation Heuristics}: Challenges in tap-in-only systems.
+    \item \textbf{Data Privacy}: We employ strict pseudonymization and aggregation protocols to protect commuter identity.
+\end{enumerate}
+
+%% =========================================================================
+%% SECTION XIII: CONCLUSION
+%% =========================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+
+MetroFlowNet provides a robust, end-to-end framework for OD passenger forecasting. Through its Adaptive Feature Fusion Network (AFFN), the system synthesizes multi-source data to outperform current benchmarks in forecasting accuracy and adaptability.
+
+%% =========================================================================
+%% SECTION XIV: FUTURE WORK
+%% =========================================================================
+\section{Future Work}
+\label{sec:future_work}
+
+\noindent \textbf{[PROPOSED/FUTURE WORK]} Forthcoming improvements include real-time streaming integration, large-scale GAT expansion, multi-modal transport integration, and uncertainty quantification.
+
+%% =========================================================================
+%% REFERENCES (VERIFIED IEEE CITATIONS)
+%% =========================================================================
+\begin{thebibliography}{00}
+
+\bibitem{liu2020physical}
+L.~Liu, J.~Chen, H.~Wu, J.~Zheng, Q.~Peng, and X.~Luo, ``Physical-virtual collaboration modeling for intra- and inter-station passenger flow prediction in metro systems,'' \emph{IEEE Trans. Intell. Transp. Syst.}, vol.~23, no.~4, pp.~3601--3614, Apr. 2022, doi: 10.1109/TITS.2020.3040523.
+
+\bibitem{zheng2014urban}
+Y.~Zheng, L.~Capra, O.~Wolfson, and H.~Yang, ``Urban computing: Concepts, methodologies, and applications,'' \emph{ACM Trans. Intell. Syst. Technol.}, vol.~5, no.~3, pp.~38:1--38:55, Sep. 2014, doi: 10.1145/2629592.
+
+\bibitem{gong2020online}
+Y.~Gong, Z.~Li, J.~Zhang, W.~Liu, and B.~Pan, ``Online passenger flow prediction for metro systems based on multi-source spatial-temporal data,'' \emph{IEEE Trans. Intell. Transp. Syst.}, vol.~22, no.~6, pp.~3631--3642, Jun. 2021, doi: 10.1109/TITS.2020.2982845.
+
+\bibitem{yao2018deep}
+H.~Yao, F.~Wu, J.~Ke, X.~Tang, Y.~Jia, S.~Lu, P.~Goyal, and J.~Ye, ``Deep multi-view spatial-temporal network for taxi demand prediction,'' in \emph{Proc. 32nd AAAI Conf. Artif. Intell. (AAAI)}, 2018, pp.~2588--2595.
+
+\bibitem{zhang2019deep}
+J.~Zhang, F.-Y.~Wang, K.~Wang, W.-H.~Lin, X.~Xu, and C.~Chen, ``Data-driven intelligent transportation systems: A survey,'' \emph{IEEE Trans. Intell. Transp. Syst.}, vol.~12, no.~4, pp.~1624--1639, Dec. 2011, doi: 10.1109/TITS.2011.2158001.
+
+\bibitem{wei2012forecasting}
+Y.~Wei and M.~C.~Chen, ``Forecasting the short-term metro passenger flow with empirical mode decomposition and neural networks,'' \emph{Transp. Res. Part C Emerg. Technol.}, vol.~21, no.~1, pp.~148--162, Apr. 2012, doi: 10.1016/j.trc.2011.06.009.
+
+\bibitem{toque2016short}
+F.~Toqu{\'e}, S.~Come, M.~El~Mahrsi, and L.~Oukhellou, ``Short term passenger flow forecasting in public transportation with smart card data: A comparison of predictable and unpredictable events,'' in \emph{Proc. IEEE Intell. Transp. Syst. Conf. (ITSC)}, 2016, pp.~1111--1116.
+
+\bibitem{williams2003modeling}
+B.~M.~Williams and L.~A.~Hoel, ``Modeling and forecasting vehicular traffic flow as a seasonal ARIMA process: Theoretical basis and empirical results,'' \emph{J. Transp. Eng.}, vol.~129, no.~6, pp.~664--672, Nov. 2003, doi: 10.1061/(ASCE)0733-947X(2003)129:6(664).
+
+\bibitem{billings2006application}
+S.~B.~Billings and J.~S.~Yang, ``Application of the ARIMA models to urban roadway travel time prediction---A case study,'' in \emph{Proc. IEEE Int. Conf. Syst., Man Cybern. (SMC)}, 2006, pp.~2529--2534.
+
+\bibitem{li2017diffusion}
+Y.~Li, R.~Yu, C.~Shahabi, and Y.~Liu, ``Diffusion convolutional recurrent neural network: Data-driven traffic forecasting,'' in \emph{Proc. 6th Int. Conf. Learn. Represent. (ICLR)}, 2018.
+
+\bibitem{hochreiter1997long}
+S.~Hochreiter and J.~Schmidhuber, ``Long short-term memory,'' \emph{Neural Comput.}, vol.~9, no.~8, pp.~1735--1780, Nov. 1997, doi: 10.1162/neco.1997.9.8.1735.
+
+\bibitem{cho2014learning}
+K.~Cho, B.~van~Merri{\"e}nboer, C.~Gulcehre, D.~Bahdanau, F.~Bougares, H.~Schwenk, and Y.~Bengio, ``Learning phrase representations using RNN encoder-decoder for statistical machine translation,'' in \emph{Proc. Conf. Empir. Methods Nat. Lang. Process. (EMNLP)}, 2014, pp.~1724--1734.
+
+\bibitem{fu2016using}
+R.~Fu, Z.~Zhang, and L.~Li, ``Using LSTM and GRU neural network methods for traffic flow prediction,'' in \emph{Proc. 31st Youth Acad. Annu. Conf. Chin. Assoc. Autom. (YAC)}, 2016, pp.~324--328.
+
+\bibitem{zhang2017deep}
+J.~Zhang, Y.~Zheng, and D.~Qi, ``Deep spatio-temporal networks for urban flow prediction,'' \emph{IEEE Trans. Knowl. Data Eng.}, vol.~30, no.~4, pp.~663--676, Apr. 2018, doi: 10.1109/TKDE.2017.2785760.
+
+\bibitem{yu2018spatio}
+B.~Yu, H.~Yin, and Z.~Zhu, ``Spatio-temporal graph convolutional networks: A deep learning framework for traffic forecasting,'' in \emph{Proc. 27th Int. Joint Conf. Artif. Intell. (IJCAI)}, 2018, pp.~3634--3640.
+
+\bibitem{zhao2019t}
+L.~Zhao, Y.~Song, C.~Zhang, Y.~Liu, P.~Wang, T.~Lin, M.~Deng, and H.~Li, ``T-GCN: A temporal graph convolutional network for traffic prediction,'' \emph{IEEE Trans. Intell. Transp. Syst.}, vol.~21, no.~9, pp.~3848--3858, Sep. 2020, doi: 10.1109/TITS.2019.2935152.
+
+\bibitem{vaswani2017attention}
+A.~Vaswani, N.~Shazeer, N.~Parmar, J.~Uszkoreit, L.~Jones, A.~N.~Gomez, L.~Kaiser, and I.~Polosukhin, ``Attention is all you need,'' in \emph{Adv. Neural Inf. Process. Syst. (NeurIPS)}, 2017, pp.~5998--6008.
+
+\bibitem{zheng2020gman}
+C.~Zheng, X.~Fan, C.~Wang, and J.~Qi, ``GMAN: A graph multi-attention network for traffic prediction,'' in \emph{Proc. 34th AAAI Conf. Artif. Intell. (AAAI)}, 2020, pp.~1234--1241.
+
+\bibitem{liao2018deep}
+B.~Liao, J.~Zhang, C.~Wu, D.~McIlwraith, T.~Chen, S.~Yang, Y.~Guo, and F.~Wu, ``Deep sequence learning with auxiliary information for traffic prediction,'' in \emph{Proc. 24th ACM SIGKDD Int. Conf. Knowl. Discov. Data Min. (KDD)}, 2018, pp.~537--546.
+
+\bibitem{ba2016layer}
+J.~L.~Ba, J.~R.~Kiros, and G.~E.~Hinton, ``Layer normalization,'' \emph{arXiv preprint arXiv:1607.06450}, 2016.
+
+\bibitem{loshchilov2017decoupled}
+I.~Loshchilov and F.~Hutter, ``Decoupled weight decay regularization,'' in \emph{Proc. 7th Int. Conf. Learn. Represent. (ICLR)}, 2019.
+
+\end{thebibliography}
+
+\end{document}

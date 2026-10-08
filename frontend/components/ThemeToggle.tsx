@@ -2,23 +2,53 @@
 
 import { useTheme } from "@/components/ThemeProvider";
 
-const themes = ["light", "dark", "system"] as const;
+const themes = [
+  {
+    id: "light",
+    label: "Light",
+    icon: (
+      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+      </svg>
+    ),
+  },
+  {
+    id: "dark",
+    label: "Dark",
+    icon: (
+      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+      </svg>
+    ),
+  },
+  {
+    id: "system",
+    label: "Auto",
+    icon: (
+      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      </svg>
+    ),
+  },
+] as const;
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
 
   return (
-    <div className="glass-card inline-flex rounded-full p-1">
+    <div className="apple-segmented-track p-0.5">
       {themes.map((item) => (
         <button
-          key={item}
+          key={item.id}
           type="button"
-          className={`rounded-full px-3 py-1.5 text-xs font-semibold capitalize transition ${
-            theme === item ? "bg-[var(--accent)] text-white" : "text-[var(--muted)]"
+          className={`apple-segmented-item flex items-center gap-1.5 px-2.5 py-1 text-[11px] ${
+            theme === item.id ? "active" : ""
           }`}
-          onClick={() => setTheme(item)}
+          onClick={() => setTheme(item.id)}
+          title={`Switch to ${item.label} mode`}
         >
-          {item}
+          {item.icon}
+          <span className="hidden sm:inline">{item.label}</span>
         </button>
       ))}
     </div>

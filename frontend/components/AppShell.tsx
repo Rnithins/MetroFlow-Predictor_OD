@@ -10,20 +10,32 @@ import { getInitials } from "@/lib/format";
 import type { User } from "@/types";
 
 type AppShellProps = {
-  title: string;
-  subtitle: string;
+  title?: string;
+  subtitle?: string;
   children: React.ReactNode;
   actions?: React.ReactNode;
 };
 
 const items = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/history", label: "History" },
+  { href: "/dashboard", label: "Overview", exact: true },
+  { href: "/dashboard/india", label: "National Portal" },
+  { href: "/dashboard/city", label: "Metro Networks" },
+  { href: "/dashboard/od-network", label: "OD Matrix & Graph" },
+  { href: "/dashboard/gtfs", label: "GTFS Pipeline" },
+  { href: "/dashboard/route-optimization", label: "Route Optimizer" },
+  { href: "/dashboard/predictions", label: "AI Forecasts" },
+  { href: "/dashboard/simulation", label: "Operations Simulator" },
+  { href: "/dashboard/reports", label: "Reports" },
   { href: "/profile", label: "Profile" },
   { href: "/admin", label: "Admin", adminOnly: true }
 ];
 
-export function AppShell({ title, subtitle, children, actions }: AppShellProps) {
+export function AppShell({
+  title = "MetroFlow Predictor",
+  subtitle = "AI-Driven Origin-Destination Passenger Intelligence",
+  children,
+  actions
+}: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -42,55 +54,102 @@ export function AppShell({ title, subtitle, children, actions }: AppShellProps) 
 
   return (
     <main className="app-shell">
-      <div className="mb-5 flex flex-col gap-4 rounded-[30px] border border-[var(--panel-border)] bg-[color:var(--panel)] p-4 backdrop-blur-xl lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--accent)]/15 text-lg font-bold text-[var(--accent)]">
-            M
+      {/* ── Apple Floating Frosted Island Header ── */}
+      <header className="glass-card mb-8 p-4 sm:p-5 transition-all duration-300">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          
+          {/* Brand Monogram & Title */}
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 p-[1px] shadow-lg shadow-blue-500/20">
+              <div className="flex h-full w-full items-center justify-center rounded-[15px] bg-white/20 backdrop-blur-md">
+                <span className="text-sm font-bold tracking-wider text-white">MF</span>
+              </div>
+              <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500 border border-white/60 dark:border-black/60" />
+              </span>
+            </div>
+
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">
+                  MetroFlowNet · Transit OS
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 dark:bg-blue-400/15 px-2 py-0.5 text-[10px] font-semibold text-[var(--accent)] border border-blue-500/20">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
+                  AFFN v2.4
+                </span>
+              </div>
+              <h1 className="truncate text-lg sm:text-2xl font-bold tracking-tight text-[var(--text)]">
+                {title}
+              </h1>
+              <p className="truncate text-xs text-[var(--muted)]">
+                {subtitle}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--muted)]">MetroFlow Predictor</p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-[-0.03em]">{title}</h1>
-            <p className="text-sm text-[var(--muted)]">{subtitle}</p>
+
+          {/* Right Controls: Theme Toggle & User Pill */}
+          <div className="flex shrink-0 items-center gap-2.5 self-start sm:self-center">
+            <ThemeToggle />
+
+            <div className="flex items-center gap-2.5 rounded-full border border-[var(--panel-border)] bg-black/[0.03] dark:bg-white/[0.06] p-1 pr-3 backdrop-blur-md shadow-sm">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 text-[11px] font-bold text-white shadow-sm">
+                {user ? getInitials(user.full_name) : "MF"}
+              </div>
+              <div className="hidden text-left md:block">
+                <p className="text-xs font-semibold leading-tight text-[var(--text)]">
+                  {user?.full_name ?? "Transit Analyst"}
+                </p>
+                <p className="text-[9px] uppercase tracking-wider text-[var(--muted)] font-medium">
+                  {user?.role ?? "Operator"}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="ml-1 rounded-full px-2 py-0.5 text-[11px] font-medium text-[var(--muted)] hover:bg-red-500/10 hover:text-[var(--danger)] transition-all"
+                title="Sign out"
+              >
+                Exit
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <nav className="glass-card inline-flex flex-wrap rounded-full p-1">
+        {/* Specular Hairline Divider */}
+        <div className="my-3.5 h-[1px] w-full bg-gradient-to-r from-transparent via-[var(--panel-border)] to-transparent opacity-80" />
+
+        {/* Cupertino Segmented Navigation Pill Strip */}
+        <nav className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+          <div className="apple-segmented-track w-full overflow-x-auto no-scrollbar justify-start">
             {visibleItems.map((item) => {
-              const isActive = pathname.startsWith(item.href);
+              const isActive = item.exact
+                ? pathname === item.href
+                : pathname.startsWith(item.href);
+
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                    isActive ? "bg-[var(--accent)] text-white" : "text-[var(--muted)]"
+                  className={`apple-segmented-item whitespace-nowrap ${
+                    isActive ? "active" : ""
                   }`}
                 >
                   {item.label}
                 </Link>
               );
             })}
-          </nav>
-          <ThemeToggle />
-          <div className="glass-card flex items-center gap-3 rounded-full px-3 py-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--accent-soft)] text-sm font-bold text-[var(--accent)]">
-              {user ? getInitials(user.full_name) : "MF"}
-            </div>
-            <div className="hidden sm:block">
-              <p className="text-sm font-semibold">{user?.full_name ?? "Metro User"}</p>
-              <p className="text-xs text-[var(--muted)]">{user?.role ?? "guest"}</p>
-            </div>
-            <button type="button" onClick={handleLogout} className="button-ghost px-2 py-0 text-xs">
-              Logout
-            </button>
           </div>
-        </div>
-      </div>
+        </nav>
+      </header>
 
-      <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div />
-        {actions}
-      </div>
+      {actions && (
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div />
+          {actions}
+        </div>
+      )}
 
       {children}
     </main>

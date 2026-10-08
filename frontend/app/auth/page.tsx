@@ -110,145 +110,201 @@ export default function AuthPage() {
     }
   }
 
+  const fillDemo = (email: string, pass: string) => {
+    setMode("login");
+    setForm({ ...initialState, email, password: pass });
+    setErrors({});
+    setError(null);
+  };
+
   return (
-    <main className="app-shell flex min-h-screen items-center justify-center">
-      <div className="grid w-full max-w-6xl gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+    <main className="app-shell flex min-h-screen items-center justify-center py-10">
+      <div className="grid w-full max-w-5xl gap-6 lg:grid-cols-[0.9fr_1.1fr] items-stretch">
+        {/* Left Info Card */}
         <section className="glass-card section-card fade-up flex flex-col justify-between">
           <div>
-            <span className="status-pill bg-[var(--accent-soft)] text-[var(--accent)]">Secure Access</span>
-            <h1 className="mt-6 text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">
-              Sign in to your metro operations workspace.
+            <div className="flex items-center gap-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 p-[1px] shadow-md shadow-blue-500/20">
+                <div className="flex h-full w-full items-center justify-center rounded-[14px] bg-white/20 backdrop-blur-md text-white font-bold text-xs">
+                  MF
+                </div>
+              </div>
+              <span className="text-xs font-bold tracking-tight text-[var(--text)]">MetroFlowNet OS</span>
+            </div>
+
+            <h1 className="mt-6 text-3xl font-bold tracking-[-0.04em] sm:text-4xl text-[var(--text)]">
+              Transit Operator Sign In
             </h1>
-            <p className="mt-4 max-w-xl text-base leading-7 text-[var(--muted)]">
-              Monitor station demand, generate passenger flow forecasts, and export analytics from a responsive,
-              Apple-inspired interface.
+            <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">
+              Secure enterprise gateway with bcrypt key derivation and JWT role-based access for transit controllers.
             </p>
           </div>
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-[26px] bg-[color:var(--panel)] p-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Demo Admin</p>
-              <p className="mt-3 text-sm">`admin@metroflow.ai`</p>
-              <p className="text-sm">`admin12345`</p>
-            </div>
-            <div className="rounded-[26px] bg-[color:var(--panel)] p-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Demo User</p>
-              <p className="mt-3 text-sm">`user@metroflow.ai`</p>
-              <p className="text-sm">`user12345`</p>
+          {/* Quick Click Autofill Demo Cards */}
+          <div className="mt-8 space-y-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]">
+              Click to Autofill Demo Credentials
+            </p>
+            <div className="grid gap-2.5 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => fillDemo("admin@metroflow.ai", "admin12345")}
+                className="rounded-2xl border border-[var(--panel-border)] bg-black/[0.02] dark:bg-white/[0.04] p-3 text-left hover:border-[var(--accent)] hover:bg-[var(--accent)]/5 transition-all"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[var(--text)]">Admin Demo</span>
+                  <span className="text-[10px] text-[var(--accent)] font-semibold">Autofill</span>
+                </div>
+                <p className="text-[11px] font-mono text-[var(--muted)] mt-1">admin@metroflow.ai</p>
+                <p className="text-[10px] text-[var(--muted)]">Pass: admin12345</p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => fillDemo("user@metroflow.ai", "user12345")}
+                className="rounded-2xl border border-[var(--panel-border)] bg-black/[0.02] dark:bg-white/[0.04] p-3 text-left hover:border-[var(--accent)] hover:bg-[var(--accent)]/5 transition-all"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[var(--text)]">Analyst Demo</span>
+                  <span className="text-[10px] text-[var(--accent)] font-semibold">Autofill</span>
+                </div>
+                <p className="text-[11px] font-mono text-[var(--muted)] mt-1">user@metroflow.ai</p>
+                <p className="text-[10px] text-[var(--muted)]">Pass: user12345</p>
+              </button>
             </div>
           </div>
         </section>
 
-        <section className="glass-card section-card fade-up">
-          <div className="inline-flex rounded-full border border-[var(--panel-border)] bg-[color:var(--panel)] p-1">
-            {(["login", "register"] as const).map((value) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => {
-                  setMode(value);
-                  setError(null);
-                  setErrors({});
-                  setForm(
-                    value === "login"
-                      ? { ...initialState, email: "admin@metroflow.ai", password: "admin12345" }
-                      : initialState
-                  );
-                }}
-                className={`rounded-full px-5 py-2 text-sm font-semibold capitalize ${
-                  mode === value ? "bg-[var(--accent)] text-white" : "text-[var(--muted)]"
-                }`}
-              >
-                {value}
+        {/* Right Form Card */}
+        <section className="glass-card section-card fade-up flex flex-col justify-between">
+          <div>
+            {/* Cupertino Segmented Tabs */}
+            <div className="apple-segmented-track w-full justify-between mb-6">
+              {(["login", "register"] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => {
+                    setMode(value);
+                    setError(null);
+                    setErrors({});
+                    setForm(
+                      value === "login"
+                        ? { ...initialState, email: "admin@metroflow.ai", password: "admin12345" }
+                        : initialState
+                    );
+                  }}
+                  className={`apple-segmented-item flex-1 text-center py-2 ${
+                    mode === value ? "active" : ""
+                  }`}
+                >
+                  {value === "login" ? "Sign In" : "Register Operator"}
+                </button>
+              ))}
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {mode === "register" && (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)] mb-1 block">Full Name</label>
+                    <input
+                      className="input-field text-xs"
+                      value={form.full_name}
+                      onChange={(event) => updateField("full_name", event.target.value)}
+                      placeholder="Pooja Sharma"
+                    />
+                    {errors.full_name && <span className="text-xs text-[var(--danger)]">{errors.full_name}</span>}
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)] mb-1 block">Job Title</label>
+                    <input
+                      className="input-field text-xs"
+                      value={form.job_title}
+                      onChange={(event) => updateField("job_title", event.target.value)}
+                      placeholder="Operations Controller"
+                    />
+                    {errors.job_title && <span className="text-xs text-[var(--danger)]">{errors.job_title}</span>}
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)] mb-1 block">Organization</label>
+                    <input
+                      className="input-field text-xs"
+                      value={form.organization}
+                      onChange={(event) => updateField("organization", event.target.value)}
+                      placeholder="DMRC / Namma Metro"
+                    />
+                    {errors.organization && <span className="text-xs text-[var(--danger)]">{errors.organization}</span>}
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)] mb-1 block">Metro Corridor</label>
+                    <input
+                      className="input-field text-xs"
+                      value={form.commute_line}
+                      onChange={(event) => updateField("commute_line", event.target.value)}
+                      placeholder="Blue / Yellow Line"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)] mb-1 block">Work Email</label>
+                <input
+                  className="input-field text-xs"
+                  type="email"
+                  value={form.email}
+                  onChange={(event) => updateField("email", event.target.value)}
+                  placeholder="admin@metroflow.ai"
+                />
+                {errors.email && <span className="text-xs text-[var(--danger)]">{errors.email}</span>}
+              </div>
+
+              <div>
+                <label className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)] mb-1 block">Password</label>
+                <input
+                  className="input-field text-xs"
+                  type="password"
+                  value={form.password}
+                  onChange={(event) => updateField("password", event.target.value)}
+                  placeholder="••••••••"
+                />
+                {errors.password && <span className="text-xs text-[var(--danger)]">{errors.password}</span>}
+              </div>
+
+              <button type="submit" className="button-primary w-full py-3" disabled={loading}>
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Authenticating Session...
+                  </span>
+                ) : mode === "login" ? (
+                  "Access Operations Center"
+                ) : (
+                  "Create Account"
+                )}
               </button>
-            ))}
+
+              {error && (
+                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-[var(--danger)]">
+                  {error}
+                </div>
+              )}
+            </form>
           </div>
 
-          <form onSubmit={handleSubmit} className="mt-8 grid gap-4">
-            {mode === "register" ? (
-              <div className="grid gap-4 md:grid-cols-2">
-                <label className="space-y-2">
-                  <span className="text-sm font-medium">Full Name</span>
-                  <input
-                    className="input-field"
-                    value={form.full_name}
-                    onChange={(event) => updateField("full_name", event.target.value)}
-                    placeholder="Aarav Menon"
-                  />
-                  {errors.full_name ? <span className="text-sm text-[var(--danger)]">{errors.full_name}</span> : null}
-                </label>
-
-                <label className="space-y-2">
-                  <span className="text-sm font-medium">Job Title</span>
-                  <input
-                    className="input-field"
-                    value={form.job_title}
-                    onChange={(event) => updateField("job_title", event.target.value)}
-                    placeholder="Transit Planner"
-                  />
-                  {errors.job_title ? <span className="text-sm text-[var(--danger)]">{errors.job_title}</span> : null}
-                </label>
-
-                <label className="space-y-2">
-                  <span className="text-sm font-medium">Organization</span>
-                  <input
-                    className="input-field"
-                    value={form.organization}
-                    onChange={(event) => updateField("organization", event.target.value)}
-                    placeholder="MetroFlow Transit"
-                  />
-                  {errors.organization ? <span className="text-sm text-[var(--danger)]">{errors.organization}</span> : null}
-                </label>
-
-                <label className="space-y-2">
-                  <span className="text-sm font-medium">Commute Line</span>
-                  <input
-                    className="input-field"
-                    value={form.commute_line}
-                    onChange={(event) => updateField("commute_line", event.target.value)}
-                    placeholder="Blue"
-                  />
-                </label>
-              </div>
-            ) : null}
-
-            <label className="space-y-2">
-              <span className="text-sm font-medium">Email</span>
-              <input
-                className="input-field"
-                type="email"
-                value={form.email}
-                onChange={(event) => updateField("email", event.target.value)}
-                placeholder="you@metroflow.ai"
-              />
-              {errors.email ? <span className="text-sm text-[var(--danger)]">{errors.email}</span> : null}
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-sm font-medium">Password</span>
-              <input
-                className="input-field"
-                type="password"
-                value={form.password}
-                onChange={(event) => updateField("password", event.target.value)}
-                placeholder="At least 8 characters"
-              />
-              {errors.password ? <span className="text-sm text-[var(--danger)]">{errors.password}</span> : null}
-            </label>
-
-            <button type="submit" className="button-primary mt-2 w-full" disabled={loading}>
-              {loading ? "Please wait..." : mode === "login" ? "Sign In" : "Create Account"}
-            </button>
-
-            {error ? <p className="text-sm text-[var(--danger)]">{error}</p> : null}
-          </form>
-
-          <p className="mt-6 text-sm text-[var(--muted)]">
-            JWT protects the application routes, while passwords are stored with bcrypt hashing on the backend.
-          </p>
-          <Link href="/" className="mt-4 inline-flex text-sm font-semibold text-[var(--accent)]">
-            Back to overview
-          </Link>
+          <div className="mt-6 pt-4 border-t border-[var(--panel-border)]/60 flex items-center justify-between text-xs text-[var(--muted)]">
+            <span>Encrypted with bcrypt & JWT</span>
+            <Link href="/" className="font-semibold text-[var(--accent)] hover:underline">
+              ← Return Home
+            </Link>
+          </div>
         </section>
       </div>
     </main>
