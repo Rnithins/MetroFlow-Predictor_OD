@@ -54,9 +54,9 @@ If you prefer configuring services manually via the UI:
    - **Branch**: `main`
    - **Root Directory**: `backend`
    - **Runtime**: `Python 3`
-   - **Build Command**: `pip install --upgrade pip && pip install -r requirements.txt`
+   - **Build Command**: `pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt`
    - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-   - **Plan**: Free
+   - **Instance Type / Plan**: Select **Free** (No credit card needed)
 4. Under **Advanced** > **Health Check Path**, enter: `/health`
 5. In **Environment Variables**, add:
    - `APP_NAME` = `MetroFlowNet API`
