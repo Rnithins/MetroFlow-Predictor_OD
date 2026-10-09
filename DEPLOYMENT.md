@@ -6,54 +6,103 @@ This guide details how to build, test, and deploy the **MetroFlowNet Origin-Dest
 
 ## 1. Deploying on Render (render.com)
 
-You can deploy the entire stack to Render using either the **Automated Blueprint** (recommended) or **Manual Setup**.
+Render lets you deploy both the **FastAPI Backend** and **Next.js Frontend** as managed web services. The repository includes an automated [`render.yaml`](render.yaml) Blueprint configuration.
 
-### Method A: Automated Blueprint (1-Click)
-1. Push your code to a GitHub/GitLab repository.
-2. Log in to [Render Dashboard](https://dashboard.render.com).
-3. Click **"New +"** in the top navigation and select **"Blueprint"**.
-4. Connect your repository. Render will automatically detect [`render.yaml`](render.yaml).
-5. Render will configure:
-   - **`metroflow-backend`** (Python 3.11 web service with PyTorch AFFN model)
-   - **`metroflow-frontend`** (Node.js Next.js 14 transit control center)
-   - Automatic cross-service environment variables (`NEXT_PUBLIC_API_BASE_URL` & `BACKEND_URL`)
-6. Click **"Apply"**. Both services will build and deploy automatically!
+### Prerequisites: Push Code to GitHub
 
-### Method B: Manual Dashboard Setup on Render
+Render builds directly from your GitHub repository. Ensure your latest changes are pushed:
 
-#### Step 1: Deploy Backend Web Service
-1. In Render, click **"New +"** > **"Web Service"**.
-2. Connect your repo and set:
+```powershell
+# In PowerShell (from MetroFlow-Predictor_OD directory)
+git status
+git push origin main
+```
+
+> **Note on GitHub Authentication (403 Error):**  
+> If `git push` fails with `Permission denied to <user>`, update your remote with your GitHub Personal Access Token (PAT) or authenticate your GitHub account:
+> ```powershell
+> git remote set-url origin https://<YOUR_GITHUB_USERNAME>:<YOUR_PERSONAL_ACCESS_TOKEN>@github.com/Rnithins/MetroFlow-Predictor_OD.git
+> git push origin main
+> ```
+
+---
+
+### Option A: 1-Click Automated Blueprint (Recommended)
+
+1. Log in to your [Render Dashboard](https://dashboard.render.com).
+2. Click the **"New +"** button in the top navigation and choose **"Blueprint"**.
+3. Connect your GitHub repository (`Rnithins/MetroFlow-Predictor_OD`).
+4. Render automatically reads [`render.yaml`](render.yaml) and provisions two services:
+   - **`metroflow-backend`** (Python 3.11 with FastAPI and PyTorch CPU)
+   - **`metroflow-frontend`** (Node 18 with Next.js 14)
+5. Review the plan and click **"Apply"**.
+6. Render builds and launches both services. Once the backend finishes building, note its URL (e.g., `https://metroflow-backend.onrender.com`).
+7. In the `metroflow-frontend` service settings under **Environment**, verify that `NEXT_PUBLIC_API_BASE_URL` points to your backend URL (`https://<backend-slug>.onrender.com/api/v1`).
+
+---
+
+### Option B: Manual Service Setup in Render Dashboard
+
+If you prefer configuring services manually via the UI:
+
+#### 1. Backend Web Service (`metroflow-backend`)
+1. Click **"New +"** > **"Web Service"**.
+2. Select your repository: `MetroFlow-Predictor_OD`.
+3. Set configuration fields:
    - **Name**: `metroflow-backend`
+   - **Region**: Any (e.g. Oregon, Frankfurt, Singapore)
+   - **Branch**: `main`
    - **Root Directory**: `backend`
    - **Runtime**: `Python 3`
    - **Build Command**: `pip install --upgrade pip && pip install -r requirements.txt`
    - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-   - **Health Check Path**: `/health`
-3. Add Environment Variables:
+   - **Plan**: Free
+4. Under **Advanced** > **Health Check Path**, enter: `/health`
+5. In **Environment Variables**, add:
    - `APP_NAME` = `MetroFlowNet API`
    - `API_PREFIX` = `/api/v1`
-   - `SECRET_KEY` = `(click Generate)`
-   - `CORS_ORIGINS` = `*`
+   - `SECRET_KEY` = `(click Generate to generate a secure 64-char key)`
+   - `ACCESS_TOKEN_EXPIRE_MINUTES` = `180`
    - `MONGODB_URI` = `mongomock://localhost` *(or your MongoDB Atlas connection string)*
    - `MONGODB_DATABASE` = `metroflow_predictor`
+   - `CORS_ORIGINS` = `*`
    - `MODEL_VERSION` = `metroflow-adaptive-fusion-v2`
-4. Click **Create Web Service**. Note the deployed URL (e.g. `https://metroflow-backend.onrender.com`).
+   - `PYTHON_VERSION` = `3.11.9`
+6. Click **Create Web Service**. Wait for the build to finish, and copy your assigned URL (e.g., `https://metroflow-backend-xxxx.onrender.com`).
 
-#### Step 2: Deploy Frontend Web Service
-1. In Render, click **"New +"** > **"Web Service"**.
-2. Connect your repo and set:
+#### 2. Frontend Web Service (`metroflow-frontend`)
+1. Click **"New +"** > **"Web Service"**.
+2. Select the same repository: `MetroFlow-Predictor_OD`.
+3. Set configuration fields:
    - **Name**: `metroflow-frontend`
+   - **Branch**: `main`
    - **Root Directory**: `frontend`
    - **Runtime**: `Node`
    - **Build Command**: `npm install && npm run build`
    - **Start Command**: `npm start`
-   - **Health Check Path**: `/`
-3. Add Environment Variables:
+   - **Plan**: Free
+4. Under **Advanced** > **Health Check Path**, enter: `/`
+5. In **Environment Variables**, add:
    - `NODE_VERSION` = `18.20.0`
-   - `NEXT_PUBLIC_API_BASE_URL` = `https://metroflow-backend.onrender.com/api/v1` *(replace with your actual backend URL)*
-   - `BACKEND_URL` = `https://metroflow-backend.onrender.com`
-4. Click **Create Web Service**.
+   - `NEXT_PUBLIC_API_BASE_URL` = `https://<your-backend-slug>.onrender.com/api/v1`
+   - `BACKEND_URL` = `https://<your-backend-slug>.onrender.com`
+6. Click **Create Web Service**.
+
+---
+
+### Verification Once Deployed
+
+1. **Verify Backend Health**:
+   Open in your browser: `https://<your-backend-slug>.onrender.com/health`  
+   Expected JSON response: `{"status":"ok","service":"MetroFlowNet API"}`
+
+2. **Verify Interactive API Documentation**:
+   Open in your browser: `https://<your-backend-slug>.onrender.com/docs`  
+   FastAPI Swagger UI will display all 34 operational endpoints.
+
+3. **Verify Transit Frontend**:
+   Open your frontend URL: `https://<your-frontend-slug>.onrender.com`  
+   You will see the MetroFlowNet transit control center, live maps, OD matrix heatmaps, route optimization, and prediction composer.
 
 ---
 
