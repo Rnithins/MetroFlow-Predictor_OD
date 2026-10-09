@@ -8,7 +8,7 @@ services:
     plan: free
     rootDir: backend
     buildCommand: pip install --upgrade pip && pip install torch --index-url https://download.pytorch.org/whl/cpu && pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    startCommand: sh -c "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"
     healthCheckPath: /health
     autoDeploy: true
     envVars:
@@ -40,7 +40,7 @@ services:
     plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
-    startCommand: npm start
+    startCommand: sh -c "npx next start -H 0.0.0.0 -p ${PORT:-3000}"
     healthCheckPath: /
     autoDeploy: true
     envVars:

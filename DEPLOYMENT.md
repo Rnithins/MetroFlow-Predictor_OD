@@ -54,8 +54,8 @@ If you prefer configuring services manually via the UI:
    - **Branch**: `main`
    - **Root Directory**: `backend`
    - **Runtime**: `Python 3`
-   - **Build Command**: `pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt`
-   - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   - **Build Command**: `pip install --upgrade pip && pip install torch --index-url https://download.pytorch.org/whl/cpu && pip install -r requirements.txt`
+   - **Start Command**: `sh -c "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"`
    - **Instance Type / Plan**: Select **Free** (No credit card needed)
 4. Under **Advanced** > **Health Check Path**, enter: `/health`
 5. In **Environment Variables**, add:
@@ -79,8 +79,8 @@ If you prefer configuring services manually via the UI:
    - **Root Directory**: `frontend`
    - **Runtime**: `Node`
    - **Build Command**: `npm install && npm run build`
-   - **Start Command**: `npm start`
-   - **Plan**: Free
+   - **Start Command**: `sh -c "npx next start -H 0.0.0.0 -p ${PORT:-3000}"`
+   - **Instance Type / Plan**: Select **Free** (No credit card needed)
 4. Under **Advanced** > **Health Check Path**, enter: `/`
 5. In **Environment Variables**, add:
    - `NODE_VERSION` = `18.20.0`
