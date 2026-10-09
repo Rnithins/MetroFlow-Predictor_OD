@@ -13,7 +13,13 @@ from src.training.train import train_model
 
 def test_od_matrix_pipeline():
     sample_df = generate_sample_tap_logs(num_records=150)
-    matrix_df = process_raw_tap_logs(sample_df, time_interval="15m")
+    res = process_raw_tap_logs(sample_df, time_interval="15m")
+    if isinstance(res, dict):
+        assert "edge_list" in res
+        assert "matrix_dense" in res
+        matrix_df = res["dataframe"]
+    else:
+        matrix_df = res
     assert not matrix_df.empty
     assert "Origin" in matrix_df.columns
     assert "Destination" in matrix_df.columns
@@ -23,7 +29,8 @@ def test_od_matrix_pipeline():
 
 def test_feature_engineering():
     df = generate_sample_tap_logs(num_records=50)
-    matrix_df = process_raw_tap_logs(df, time_interval="15m")
+    res = process_raw_tap_logs(df, time_interval="15m")
+    matrix_df = res["dataframe"] if isinstance(res, dict) else res
     features_df = build_features(matrix_df)
     
     assert "hour" in features_df.columns

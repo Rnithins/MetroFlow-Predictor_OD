@@ -4,10 +4,18 @@ import numpy as np
 import pandas as pd
 
 
-def build_features(frame: pd.DataFrame) -> pd.DataFrame:
+def build_features(frame: pd.DataFrame | dict) -> pd.DataFrame:
     """
     Computes Temporal, Spatial, and Contextual features for Adaptive Feature Fusion Network (AFFN).
     """
+    if isinstance(frame, dict):
+        if "dataframe" in frame and isinstance(frame["dataframe"], pd.DataFrame):
+            frame = frame["dataframe"]
+        elif "edge_list" in frame and isinstance(frame["edge_list"], list):
+            frame = pd.DataFrame(frame["edge_list"])
+        else:
+            frame = pd.DataFrame(frame)
+
     features = frame.copy()
 
     # 1. Temporal Features
