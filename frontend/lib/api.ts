@@ -1,5 +1,20 @@
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
+function resolveBaseUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+  if (envUrl) {
+    const stripped = envUrl.replace(/\/+$/, "");
+    return stripped.endsWith("/api/v1") ? stripped : `${stripped}/api/v1`;
+  }
+  if (typeof window !== "undefined") {
+    return "/api/v1";
+  }
+  const backend = process.env.BACKEND_URL?.trim()?.replace(/\/+$/, "");
+  if (backend) {
+    return backend.endsWith("/api/v1") ? backend : `${backend}/api/v1`;
+  }
+  return "http://localhost:8000/api/v1";
+}
+
+export const API_BASE_URL = resolveBaseUrl();
 
 export class ApiError extends Error {
   status?: number;

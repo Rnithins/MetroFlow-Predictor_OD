@@ -45,14 +45,6 @@ services:
       - key: NODE_VERSION
         value: 18.20.0
       - key: NEXT_PUBLIC_API_BASE_URL
-        fromService:
-          type: web
-          name: metroflow-backend
-          property: host
-        transform: "https://${host}/api/v1"
+        value: https://metroflow-backend.onrender.com/api/v1
       - key: BACKEND_URL
-        fromService:
-          type: web
-          name: metroflow-backend
-          property: host
-        transform: "https://${host}"
+        value: https://metroflow-backend.onrender.com
