@@ -40,7 +40,7 @@ services:
     plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
-    startCommand: npx next start -H 0.0.0.0 --port $PORT
+    startCommand: npm start
     healthCheckPath: /
     autoDeploy: true
     envVars:

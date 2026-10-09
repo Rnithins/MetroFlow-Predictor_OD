@@ -411,7 +411,7 @@ def seed_database(database: Database) -> None:
             "_id": "user_analyst_001",
             "email": "user@metroflow.ai",
             "full_name": "Transit Analyst",
-            "password_hash": get_password_hash("User@12345"),
+            "password_hash": get_password_hash("user12345"),
             "role": "user",
             "is_active": True,
             "job_title": "Demand Analyst",
@@ -424,10 +424,10 @@ def seed_database(database: Database) -> None:
     ]
 
     flows: list[dict] = []
-    start = (now - timedelta(days=13)).replace(hour=0)
+    start = (now - timedelta(days=7)).replace(hour=0)
     
-    # 1. Seed Passenger Flows
-    for day_offset in range(14):
+    # 1. Seed Passenger Flows (8 days: 7 days historical + today)
+    for day_offset in range(8):
         day_start = start + timedelta(days=day_offset)
         weekend_factor = 0.75 if day_start.weekday() >= 5 else 1.0
 
@@ -480,12 +480,16 @@ def seed_database(database: Database) -> None:
         city_stations = [s for s in stations if s["city"] == city]
         if len(city_stations) < 2:
             continue
-        # Seed matrices for the past 24 hours (hourly)
-        for h_offset in range(24):
+        # Use key interchange / hub stations (up to 15) to keep matrices fast and memory-efficient
+        interchanges = [s for s in city_stations if s.get("is_interchange")]
+        non_interchanges = [s for s in city_stations if not s.get("is_interchange")]
+        key_stations = (interchanges + non_interchanges)[:15]
+        # Seed matrices for the past 6 hours (hourly)
+        for h_offset in range(6):
             matrix_time = now - timedelta(hours=h_offset)
             matrix_list = []
-            for origin in city_stations:
-                for dest in city_stations:
+            for origin in key_stations:
+                for dest in key_stations:
                     if origin["code"] == dest["code"]:
                         continue
                     # Dynamic flow based on peak hours

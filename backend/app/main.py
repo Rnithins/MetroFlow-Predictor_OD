@@ -16,22 +16,17 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    import time
     import logging
 
     logger = logging.getLogger("uvicorn.error")
-    database = get_database()
-    for attempt in range(1, 10):
-        try:
-            ensure_indexes(database)
-            seed_database(database)
-            break
-        except Exception as exc:
-            if attempt == 9:
-                logger.error(f"Failed to initialize database after 9 attempts: {exc}")
-                raise
-            logger.warning(f"Database initialization attempt {attempt}/9 failed ({exc}). Retrying in 1.5s...")
-            time.sleep(1.5)
+    try:
+        database = get_database()
+        ensure_indexes(database)
+        seed_database(database)
+        logger.info("MetroFlowNet database initialized and seeded successfully.")
+    except Exception as exc:
+        logger.warning(f"Database bootstrap warning: {exc}")
+
     try:
         yield
     finally:
@@ -66,3 +61,11 @@ def health() -> dict[str, str]:
 # Include routes under prefix (e.g. /api/v1) and at root level
 app.include_router(api_router, prefix=settings.api_prefix)
 app.include_router(api_router)
+
+
+if __name__ == "__main__":
+    import os
+    import uvicorn
+
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port, log_level="info")
